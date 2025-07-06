@@ -63,19 +63,19 @@
 
 ---
 
-## 🗂️ Cấu trúc thư mục
-BAITAPLON/.
-├── app.py             # 🚀 Server Flask với Socket.IO để xử lý yêu cầu.
-├── client.js          # 💬 Xử lý giao tiếp và giải mã phía client (CryptoJS).
-├── des_utils.py       # 🔐 Các hàm mã hóa/giải mã bằng Triple DES.
-├── rsa_utils.py       # ✍️ Hàm tạo khóa, ký số, và mã hóa RSA.
-├── hash_utils.py      # 🧾 Tạo và kiểm tra băm SHA-512.
-├── index.html         # 🌐 Giao diện người dùng (Web UI).
-├── contract.txt       # 📄 File mẫu để thử nghiệm truyền tải.
-└── uploads/           # 📂 Thư mục lưu trữ file nhận được từ client.
-
-
----
+## 🗂️ Cấu trúc thư mục dự án
+```project/ │
+              ├── app.py # 🚀 Flask backend, xử lý giao tiếp & logic chính │
+              ├── crypto/ # 🔐 Các hàm mã hóa và bảo mật │
+                  ├── rsa_utils.py # ✍️ Tạo khóa, mã hóa và ký bằng RSA │
+                  ├── des_utils.py # 🔄 Mã hóa/giải mã bằng Triple DES (CBC mode) │
+                  └── hash_utils.py # 🧾 Băm dữ liệu bằng SHA-512 │
+              ├── templates/ # 🌐 Giao diện người dùng (Flask + Jinja2) │
+                  └── index.html # 📄 Giao diện chính (gửi/nhận tin nhắn và file) │
+              ├── static/ # 🎨 Tài nguyên tĩnh │
+                  └── client.js # 💅 Giao diện với Tailwind hoặc Bootstrap │
+              └── contract_parts/ # 📂 Lưu trữ các phần file đã chia nhỏ
+```
 
 ## 🚀 Hướng dẫn chạy
 
