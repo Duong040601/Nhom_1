@@ -1,79 +1,134 @@
-Secure Chat & File Transfer Application
-Mô tả
-Ứng dụng này là một hệ thống chat và truyền file an toàn, sử dụng các kỹ thuật mã hóa để đảm bảo tính bảo mật, toàn vẹn và xác thực của dữ liệu. Các tính năng chính bao gồm:
- Mã hóa tin nhắn: Tin nhắn được mã hóa bằng Triple DES (CBC mode) với khóa phiên.
- Mã hóa file: File được chia thành ba phần, mã hóa bằng Triple DES và ký số bằng RSA.
-Ký số: Sử dụng RSA 2048-bit (PKCS#1 v1.5 + SHA-512) để xác thực metadata và các phần file.
- Kiểm tra toàn vẹn: Sử dụng SHA-512 để kiểm tra tính toàn vẹn của dữ liệu.
-Giao tiếp thời gian thực: Sử dụng Socket.IO để truyền tin nhắn và file trong các phòng chat.
-Giao diện web bao gồm:
-Người gửi (Sender): Gửi tin nhắn và file đã mã hóa.
-Người nhận (Receiver): Nhận, kiểm tra và giải mã tin nhắn/file.
-Yêu cầu kỹ thuật
-Thành phần 	Công nghệ sử dụng
-Mã hóa 	Triple DES (CBC mode, PKCS7 padding)
-Ký số & Trao khóa	RSA 2048-bit, PKCS#1 v1.5, SHA-512
-Kiểm tra toàn vẹn	SHA-512
-Giao tiếp	Flask, Socket.IO
-Giải mã phía client	CryptoJS (Triple DES)
+# 📨 Secure Chat & File Transfer Application
 
-Luồng xử lý
-1. Handshake
-Người gửi: Gửi tín hiệu "Hello!" để khởi tạo truyền file.
-Người nhận: Phản hồi "Ready!" để xác nhận sẵn sàng nhận.
-2. Trao khóa & Ký số
-Người gửi:
-Tạo metadata: Bao gồm tên file, timestamp và thông tin khác.
-Ký metadata bằng private key (RSA/SHA-512).
-Mã hóa session key Triple DES bằng public key RSA của người nhận.
-3.  Mã hóa & Gửi file
-File được chia thành 3 phần.
-Mỗi phần được:
-Mã hóa bằng Triple DES với IV ngẫu nhiên.
-Tính hash SHA-512 (IV || ciphertext).
-Ký số bằng RSA.
-Gửi các phần file kèm metadata qua Socket.IO.
-4.  Phía người nhận
-Nhận và kiểm tra:
- Hash SHA-512: Xác minh tính toàn vẹn của từng phần file.
- Chữ ký RSA: Xác minh tính xác thực của metadata và file.
-Nếu hợp lệ:
- Giải mã các phần file bằng Triple DES với session key.
- Hiển thị nội dung file hoặc cho phép tải xuống.
-Gửi tín hiệu ACK về người gửi.
-Nếu lỗi:
- Gửi tín hiệu NACK (do sai hash hoặc chữ ký).
-Cấu trúc thư mục
-BAITAPLON/
-├── app.py                  # Server Flask với Socket.IO
-├── client.js               # JavaScript xử lý giao tiếp và giải mã phía client
-├── des_utils.py            # Hàm mã hóa & giải mã Triple DES
-├── rsa_utils.py            # Hàm RSA (tạo khóa, mã hóa, ký số)
-├── hash_utils.py           # Hàm băm SHA-512
-├── index.html              # Giao diện web
-├── contract.txt            # File mẫu để thử nghiệm
-└── uploads/                # Thư mục lưu file (nếu cần)
-Hướng dẫn chạy
-1. Cài thư viện
+## 📝 Mô tả
+
+Ứng dụng này là một hệ thống **chat và truyền file an toàn**, sử dụng các kỹ thuật mã hóa để đảm bảo **bảo mật**, **toàn vẹn** và **xác thực** của dữ liệu.
+
+### ✅ Tính năng chính:
+
+- ✅ **Mã hóa tin nhắn:** Sử dụng **Triple DES (CBC mode)** với khóa phiên.
+- ✅ **Mã hóa file:** File được chia làm **3 phần**, mã hóa bằng Triple DES và **ký số bằng RSA**.
+- ✍️ **Ký số:** Dùng **RSA 2048-bit (PKCS#1 v1.5 + SHA-512)** để xác thực metadata và các phần file.
+- 🧾 **Kiểm tra toàn vẹn:** Sử dụng **SHA-512** để kiểm tra dữ liệu.
+- 🌐 **Giao tiếp thời gian thực:** Sử dụng **Socket.IO** để truyền tin nhắn và file qua các phòng chat.
+
+### 👥 Giao diện Web
+
+- 👤 **Người gửi (Sender):** Gửi tin nhắn và file đã mã hóa.
+- 📥 **Người nhận (Receiver):** Nhận, kiểm tra và giải mã tin nhắn/file.
+
+---
+
+## 🎯 Yêu cầu kỹ thuật
+
+| Thành phần           | Công nghệ sử dụng                          |
+|----------------------|--------------------------------------------|
+| Mã hóa               | Triple DES (CBC mode, PKCS7 padding)       |
+| Ký số & Trao khóa    | RSA 2048-bit, PKCS#1 v1.5, SHA-512         |
+| Kiểm tra toàn vẹn    | SHA-512                                    |
+| Giao tiếp            | Flask, Socket.IO                           |
+| Giải mã phía client  | CryptoJS (Triple DES)                      |
+
+---
+
+## 🔁 Luồng xử lý
+
+### 1. 🤝 Handshake
+- **Người gửi:** Gửi tín hiệu `"Hello!"` để khởi tạo phiên.
+- **Người nhận:** Phản hồi `"Ready!"` để xác nhận.
+
+### 2. 🔐 Trao khóa & Ký số
+- Tạo metadata: tên file, timestamp, v.v.
+- **Ký metadata** bằng private key (RSA/SHA-512).
+- **Mã hóa session key Triple DES** bằng RSA public key của người nhận.
+
+### 3. 🧩 Mã hóa & Gửi file
+- Chia file thành **3 phần**.
+- Mỗi phần:
+  - Mã hóa bằng **Triple DES + IV ngẫu nhiên**
+  - Hash SHA-512 (`IV || ciphertext`)
+  - Ký số bằng **RSA**
+- Gửi qua **Socket.IO** cùng metadata.
+
+### 4. 📬 Phía người nhận
+- Xác minh:
+  - ✅ **Hash SHA-512**
+  - ✅ **Chữ ký RSA**
+- Nếu hợp lệ:
+  - 🔓 **Giải mã** bằng Triple DES với session key.
+  - 🖼️ **Hiển thị hoặc cho tải xuống**
+  - ↩️ Gửi tín hiệu **ACK**
+- Nếu lỗi:
+  - ❌ Gửi tín hiệu **NACK**
+
+---
+
+## 🗂️ Cấu trúc thư mục
+BAITAPLON/.
+├── app.py             # 🚀 Server Flask với Socket.IO để xử lý yêu cầu.
+├── client.js          # 💬 Xử lý giao tiếp và giải mã phía client (CryptoJS).
+├── des_utils.py       # 🔐 Các hàm mã hóa/giải mã bằng Triple DES.
+├── rsa_utils.py       # ✍️ Hàm tạo khóa, ký số, và mã hóa RSA.
+├── hash_utils.py      # 🧾 Tạo và kiểm tra băm SHA-512.
+├── index.html         # 🌐 Giao diện người dùng (Web UI).
+├── contract.txt       # 📄 File mẫu để thử nghiệm truyền tải.
+└── uploads/           # 📂 Thư mục lưu trữ file nhận được từ client.
+
+
+---
+
+## 🚀 Hướng dẫn chạy
+
+### 1. Cài đặt thư viện
+
+```bash
+# Python dependencies
 pip install flask flask-socketio pycryptodome
+
+# JavaScript client
 npm install socket.io-client
-2. Chạy server
+```
+### 2. Chạy server
+bash
+Sao chép
+Chỉnh sửa
 python app.py
-Server sẽ chạy tại http://localhost:5000.
-3. Truy cập giao diện
-Mở trình duyệt và truy cập http://localhost:5000.
-Nhập tên người dùng và phòng để tham gia.
-Copy session key (base64) từ console server để giải mã.
-4. Gửi và nhận
-Gửi tin nhắn: Nhập tin nhắn và nhấn "Gửi". Tin nhắn được mã hóa bằng Triple DES.
-Gửi file: Chọn file và nhấn "Gửi File". File được chia thành 3 phần và mã hóa.
-Giải mã: Nhập session key vào giao diện, nhấn "Giải mã" để xem tin nhắn/file.
-Demo giao diện
+Server mặc định chạy tại http://localhost:5000.
+
+### 3. Truy cập giao diện
+Mở trình duyệt đến http://localhost:5000
+
+Nhập tên người dùng và phòng chat
+
+Copy session key từ console server để dùng cho giải mã
+
+### 4. Gửi và nhận
+✉️ Gửi tin nhắn: Nhập nội dung và nhấn "Gửi"
+
+📁 Gửi file: Chọn file và nhấn "Gửi File"
+
+🔐 Giải mã: Nhập session key → nhấn "Giải mã"
+
+## 📷 Demo giao diện
+# ![image](https://github.com/user-attachments/assets/b114ce49-aff7-4d5e-87ba-883c51a4499d)
+# ![image](https://github.com/user-attachments/assets/50193175-9ba0-44f0-9e6d-25bb8d6bb62d)
 
 
- Ghi chú
-Hỗ trợ gửi tin nhắn và file text (ví dụ: contract.txt).
-Tin nhắn và file được mã hóa bằng Triple DES, ký số bằng RSA, kiểm tra bằng SHA-512.
-Giao tiếp trong mạng nội bộ (LAN) qua Socket.IO.
- Tự động gửi/nhận file kèm phản hồi ACK/NACK.
-Giải mã thủ công: Người dùng cần copy session key từ console server để giải mã.
+## 📌 Ghi chú
+✅ Hỗ trợ gửi tin nhắn và file text (ví dụ contract.txt)
+
+🔐 Dữ liệu được bảo vệ bằng:
+
+Mã hóa Triple DES
+
+Ký số RSA
+
+Hash SHA-512
+
+🌐 Giao tiếp trong LAN thông qua Socket.IO
+
+🔄 Tự động xử lý ACK/NACK
+
+⚠️ Người nhận cần nhập session key thủ công
+
+© 2025 – Bài tập lớn An toàn & Bảo mật thông tin
