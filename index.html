@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Chat & File Transfer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="/static/client.js" defer></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e3a8a 0%, #60a5fa 100%);
+        }
+        .card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+        }
+        .table-row:nth-child(even) {
+            background-color: #f9fafb;
+        }
+        .table-row:hover {
+            background-color: #e5e7eb;
+        }
+        .btn {
+            transition: background-color 0.2s ease, transform 0.2s ease;
+        }
+        .btn:hover {
+            transform: scale(1.05);
+        }
+        .toast {
+            animation: slideIn 0.5s ease forwards, fadeOut 0.5s ease 2.5s forwards;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes fadeOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen flex flex-col items-center p-4 sm:p-6">
+    <div class="w-full max-w-5xl bg-white rounded-2xl shadow-2xl p-6 sm:p-8 space-y-8">
+        <!-- Header -->
+        <div class="text-center">
+            <h1 class="text-3xl font-bold text-gray-900 flex items-center justify-center">
+                <svg class="w-8 h-8 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 1.104-.896 2-2 2s-2-.896-2-2 2-4 2-4 2 2.896 2 4zm0 0c0 1.104.896 2 2 2s2-.896 2-2-2-4-2-4-2 2.896-2 4zM7 3h10M7 21h10"></path>
+                </svg>
+                Secure Chat & File Transfer
+            </h1>
+            <p class="text-gray-600 mt-2">Gửi tin nhắn và file an toàn với mã hóa RSA và Triple DES</p>
+        </div>
+
+        <!-- Tham gia phòng -->
+        <div class="card bg-gray-50 rounded-xl p-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                <svg class="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+                </svg>
+                Tham gia phòng
+            </h2>
+            <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
+                <input id="username" type="text" placeholder="Tên người dùng" class="border border-gray-300 rounded-lg p-3 flex-1 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                <input id="room" type="text" placeholder="Tên phòng" class="border border-gray-300 rounded-lg p-3 flex-1 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                <button onclick="joinRoom()" class="btn bg-blue-600 text-white rounded-lg px-6 py-3 hover:bg-blue-700 flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14"></path>
+                    </svg>
+                    Tham gia
+                </button>
+            </div>
+        </div>
+
+        <!-- Chat -->
+        <div class="card bg-gray-50 rounded-xl p-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                <svg class="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                </svg>
+                Chat
+            </h2>
+            <div id="chatMessages" class="bg-white p-4 rounded-lg h-48 overflow-y-auto mb-4 shadow-inner"></div>
+            <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
+                <input id="chatMessage" type="text" placeholder="Nhập tin nhắn" class="border border-gray-300 rounded-lg p-3 flex-1 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                <button onclick="sendChat()" class="btn bg-blue-600 text-white rounded-lg px-6 py-3 hover:bg-blue-700 flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                    </svg>
+                    Gửi
+                </button>
+            </div>
+            <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 mt-4">
+                <input id="chatKey" type="text" placeholder="Nhập khóa phiên base64 từ console server" class="border border-gray-300 rounded-lg p-3 flex-1 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                <button onclick="decryptChat()" class="btn bg-green-600 text-white rounded-lg px-6 py-3 hover:bg-green-700 flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0-1.104-.896-2-2-2s-2 .896-2 2m4 0c0 1.104.896 2 2 2s2-.896 2-2m-4 0v4m-7-8h10m-10 12h10"></path>
+                    </svg>
+                    Giải mã
+                </button>
+            </div>
+        </div>
+
+        <!-- Gửi File -->
+        <div class="card bg-gray-50 rounded-xl p-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                <svg class="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                </svg>
+                Gửi File
+            </h2>
+            <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
+                <input id="fileInput" type="file" class="border border-gray-300 rounded-lg p-3 flex-1 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" disabled>
+                <button onclick="sendFile()" class="btn bg-blue-600 text-white rounded-lg px-6 py-3 hover:bg-blue-700 flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                    </svg>
+                    Gửi File
+                </button>
+            </div>
+        </div>
+
+        <!-- File Đã Gửi -->
+        <div class="card bg-gray-50 rounded-xl p-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                <svg class="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                File Đã Gửi
+            </h2>
+            <div class="overflow-x-auto">
+                <table id="sentFilesTable" class="w-full border-collapse">
+                    <thead>
+                        <tr class="bg-blue-100 text-gray-700">
+                            <th class="p-3 text-left font-medium">Tên File</th>
+                            <th class="p-3 text-left font-medium">Thời Gian Gửi</th>
+                            <th class="p-3 text-left font-medium">Trạng Thái</th>
+                            <th class="p-3 text-left font-medium">Hành Động</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- File Đã Nhận -->
+        <div class="card bg-gray-50 rounded-xl p-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                <svg class="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"></path>
+                </svg>
+                File Đã Nhận
+            </h2>
+            <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 mb-4">
+                <input id="fileKey" type="text" placeholder="Nhập khóa phiên base64 từ console server" class="border border-gray-300 rounded-lg p-3 flex-1 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                <button onclick="decryptFile()" class="btn bg-green-600 text-white rounded-lg px-6 py-3 hover:bg-green-700 flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0-1.104-.896-2-2-2s-2 .896-2 2m4 0c0 1.104.896 2 2 2s2-.896 2-2m-4 0v4m-7-8h10m-10 12h10"></path>
+                    </svg>
+                    Giải mã
+                </button>
+            </div>
+            <div class="overflow-x-auto">
+                <table id="fileTable" class="w-full border-collapse">
+                    <thead>
+                        <tr class="bg-blue-100 text-gray-700">
+                            <th class="p-3 text-left font-medium">Tên File</th>
+                            <th class="p-3 text-left font-medium">Nội Dung</th>
+                            <th class="p-3 text-left font-medium">Thời Gian Nhận</th>
+                            <th class="p-3 text-left font-medium">Hành Động</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Trạng Thái -->
+        <div class="card bg-gray-50 rounded-xl p-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                <svg class="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Trạng Thái
+            </h2>
+            <div id="statusMessages" class="bg-white p-4 rounded-lg h-48 overflow-y-auto shadow-inner"></div>
+        </div>
+
+        <!-- Toast Container -->
+        <div id="toastContainer" class="fixed top-4 right-4 space-y-2"></div>
+    </div>
+</body>
+</html>
